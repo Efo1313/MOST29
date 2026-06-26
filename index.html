@@ -1,39 +1,55 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOST29 - Reklamsız Canlı TV</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="theme-color" content="#000000">
+    <title>MOST29 - Canlı Yayın Paneli</title>
+    
+    <!-- Font Awesome ve Orijinal Stiller -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background-color: #0f172a; color: #ffffff; font-family: sans-serif; padding: 20px; }
         .container { max-width: 1000px; margin: 0 auto; }
-        h1 { text-align: center; color: #e94560; margin-bottom: 20px; font-size: 24px; }
+        h1 { text-align: center; color: #e94560; margin-bottom: 20px; font-size: 24px; font-weight: bold; }
         
+        /* Orijinal Oyuncu Tasarımı */
+        #player-container { display: none; margin-bottom: 25px; background: #000; padding: 10px; border-radius: 8px; border: 2px solid #e94560; box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3); }
+        #player-container iframe { width: 100%; aspect-ratio: 16/9; border: 0; }
+        .close-player { background: #dc2626; color: white; border: 0; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 8px; float: right; transition: 0.2s; }
+        .close-player:hover { background: #b91c1c; }
+
+        /* Kategori Filtre Butonları */
+        .topcategory-filter { margin: 20px 0; padding: 10px; background: #1e293b; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 8px; border: 1px solid #334155; }
+        .topcategory-btn { padding: 10px 14px; background: #2563eb; border: 1px solid #1d4ed8; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s ease; color: #ffffff; }
+        .topcategory-btn:hover { background: #1d4ed8; transform: translateY(-2px); }
+        .topcategory-btn.active { background: #e94560; border-color: #e94560; box-shadow: 0 0 10px rgba(233, 69, 96, 0.5); }
+
         /* Arama Çubuğu */
-        .search-bar { margin-bottom: 20px; }
-        .search-bar input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e94560; background: #1e293b; color: #fff; font-size: 16px; }
+        .search-bar { margin: 20px 0; }
+        .search-bar input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #fff; font-size: 16px; transition: 0.2s; }
+        .search-bar input:focus { border-color: #e94560; outline: none; }
+
+        /* Bölüm Başlıkları ve Maç Listesi */
+        .event-date { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 5px solid #e94560; padding: 10px 15px; margin: 25px 0 12px 0; border-radius: 0 6px 6px 0; font-weight: bold; font-size: 16px; color: #fff; }
+        .topcategory-section { margin: 15px 0; padding: 15px; background: #1e293b; border-radius: 8px; border: 1px solid #334155; }
+        .topcategory-section h2 { margin: 0 0 15px 0; padding: 10px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border-radius: 5px; font-size: 16px; }
         
         /* Maç Kartları */
-        .event-date { background: #e94560; padding: 8px 15px; margin: 20px 0 10px 0; border-radius: 6px; font-weight: bold; font-size: 14px; }
-        .topcategory-section h2 { font-size: 16px; color: #38bdf8; margin: 15px 0 8px 5px; border-left: 3px solid #38bdf8; padding-left: 8px; }
-        .event { background: #1e293b; margin-bottom: 8px; border-radius: 8px; border: 1px solid #334155; overflow: hidden; cursor: pointer; transition: 0.2s; }
+        .event { background: #0f172a; margin-bottom: 10px; border-radius: 8px; border: 1px solid #334155; overflow: hidden; cursor: pointer; transition: 0.2s; }
         .event:hover { border-color: #e94560; }
         .event-content { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .event-time { color: #f43f5e; font-weight: bold; font-size: 14px; margin-right: 15px; }
+        .event-time { color: #f43f5e; font-weight: bold; font-size: 14px; margin-right: 15px; min-width: 70px; }
         .event-description { flex: 1; font-weight: 500; font-size: 15px; }
         
-        /* Kanal Linkleri */
-        .channel-list { background: #0f172a; padding: 10px; border-top: 1px solid #334155; display: none; }
-        .channel-list.show { display: block; }
-        .channel-item { display: inline-block; background: #2563eb; color: white; padding: 8px 16px; margin: 5px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; transition: 0.2s; }
+        /* Linklerin Orijinal Görünümü */
+        .channel-list { background: #1e293b; padding: 12px; border-top: 1px solid #334155; display: none; gap: 8px; flex-wrap: wrap; }
+        .channel-list.show { display: flex; }
+        .channel-item { display: inline-block; background: #2563eb; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; transition: 0.2s; border: 1px solid #1d4ed8; }
         .channel-item:hover { background: #1d4ed8; transform: translateY(-1px); }
-        
-        /* Video Oynatıcı Alanı (Popup yerine sayfa içi player) */
-        #player-container { display: none; margin-bottom: 25px; background: #000; padding: 10px; border-radius: 8px; border: 2px solid #e94560; }
-        #player-container iframe { width: 100%; aspect-ratio: 16/9; border: 0; }
-        .close-player { background: #dc2626; color: white; border: 0; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 8px; float: right; }
     </style>
 </head>
 <body>
@@ -41,76 +57,120 @@
 <div class="container">
     <h1>MOST29 CANLI SPOR PANELDİ</h1>
 
-    <!-- Tıklanan Maç Doğrudan Burada Reklamsız Açılacak -->
+    <!-- Tam Ekran Yapma Butonları İçeren Oyuncu Görünümü Aynen Korundu -->
     <div id="player-container">
-        <button class="close-player" onclick="closePlayer()">Kapat X</button>
-        <iframe id="live-player" src="" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>
+        <button class="close-player" onclick="closePlayer()"><i class="fa-solid fa-xmark"></i> Kapat</button>
+        <div style="clear: both;"></div>
+        <!-- Sandbox ayarları sadece video oynatmaya izin verecek, popup açamayacak şekilde kilitlendi -->
+        <iframe id="live-player" src="" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>
     </div>
 
+    <!-- Arama Çubuğu -->
     <div class="search-bar">
-        <input type="text" id="search" placeholder="Takım, maç veya kanal ara..." onkeyup="searchEvent()">
+        <input type="text" id="search" placeholder="Etkinlik, kanal veya kategori ara..." onkeyup="searchEventOrChannel()">
     </div>
     
+    <!-- Kategori Filtre Butonları -->
+    <div id="topcategory-filter" class="topcategory-filter"></div>
+    
+    <!-- Program Akış Alanı -->
     <div id="schedule-container">
-        <p style="text-align:center; color:#94a3b8;">Yayın listesi yükleniyor...</p>
+        <p style="text-align: center; padding: 20px; color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Yayın listesi CORS engeli aşılarak güvenle yükleniyor...</p>
     </div>
 </div>
 
 <script>
-    // DaddyLive'ın resmi güncel maç listesi API adresleri
-    const url = 'https://daddylive.li/cache/tv/tv.json';
+    // CORS hatasını tamamen bypass eden güvenli AllOrigins Proxy adresleri
+    const targetUrl = 'https://daddylive.li/cache/tv/tv.json';
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
     
-    async function loadStreams() {
+    let allData = {};
+    let selectedTopCategory = 'All';
+
+    async function fetchAndRenderSchedule() {
         try {
-            const response = await fetch(url);
-            const data = await response.json();
-            renderSchedule(data);
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error('Proxy yanıt vermedi.');
+            
+            const wrapper = await response.json();
+            allData = JSON.parse(wrapper.contents); // Gelen şifreli ham metni JSON nesnesine çeviriyoruz
+            
+            const topcategories = extractTopCategories(allData);
+            renderTopCategoryFilter(topcategories);
+            renderSchedule(allData, 'All');
         } catch (error) {
-            document.getElementById('schedule-container').innerHTML = '<p style="color:red; text-align:center;">Yayın listesi alınamadı. Lütfen daha sonra tekrar deneyin.</p>';
+            console.error('Veri yükleme hatası:', error);
+            document.getElementById('schedule-container').innerHTML = '<p style="color: #f43f5e; text-align: center; padding: 20px;"><i class="fa-solid fa-circle-exclamation"></i> Yayın listesi şu anda güncellenemiyor. Lütfen sayfayı yenileyin.</p>';
         }
     }
 
-    function renderSchedule(data) {
-        const container = document.getElementById('schedule-container');
-        container.innerHTML = '';
-
-        for (const [date, categories] of Object.entries(data)) {
-            const dateDiv = document.createElement('div');
-            dateDiv.classList.add('event-date');
-            dateDiv.innerText = date;
-            container.appendChild(dateDiv);
-
-            for (const [category, events] of Object.entries(categories)) {
-                if (!events.length) continue;
-
-                const catSection = document.createElement('div');
-                catSection.classList.add('topcategory-section');
-                catSection.innerHTML = `<h2>${category}</h2>`;
-
-                events.forEach(event => {
-                    const eventDiv = document.createElement('div');
-                    eventDiv.classList.add('event');
-                    
-                    let channelsHTML = '';
-                    if (event.channels && Array.isArray(event.channels)) {
-                        event.channels.forEach(ch => {
-                            // Linkleri dışarıya göndermek yerine yerleşik fonksiyonumuza bağlıyoruz
-                            channelsHTML += `<a href="#" onclick="playStream(event, '${ch.channel_id}')" class="channel-item">${ch.channel_name}</a>`;
-                        });
-                    }
-
-                    eventDiv.innerHTML = `
-                        <div class="event-content" onclick="toggleChannels(this)">
-                            <span class="event-time">${event.time}</span>
-                            <span class="event-description">${event.event}</span>
-                        </div>
-                        <div class="channel-list">${channelsHTML}</div>
-                    `;
-                    catSection.appendChild(eventDiv);
-                });
-                container.appendChild(catSection);
+    function extractTopCategories(data) {
+        const topCategoriesSet = new Set();
+        if (data && Object.keys(data).length > 0) {
+            for (const [date, topcategories] of Object.entries(data)) {
+                for (const topcategory of Object.keys(topcategories)) {
+                    topCategoriesSet.add(topcategory);
+                }
             }
         }
+        return Array.from(topCategoriesSet).sort();
+    }
+
+    function renderTopCategoryFilter(topcategories) {
+        const filterContainer = document.getElementById('topcategory-filter');
+        filterContainer.innerHTML = '';
+        
+        const fixedPriority = ['All', 'Live Events', 'Popular Events'];
+        const detectedCategories = topcategories.filter(cat => !fixedPriority.includes(cat));
+        const finalOrder = [...fixedPriority, ...detectedCategories];
+        
+        finalOrder.forEach(topcategory => {
+            const btn = document.createElement('button');
+            btn.classList.add('topcategory-btn');
+            if (topcategory === 'All') btn.classList.add('active');
+            btn.textContent = topcategory;
+            btn.onclick = () => filterByTopCategory(topcategory);
+            filterContainer.appendChild(btn);
+        });
+    }
+
+    function filterByTopCategory(topcategory) {
+        selectedTopCategory = topcategory;
+        document.querySelectorAll('.topcategory-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.textContent === topcategory) btn.classList.add('active');
+        });
+        renderSchedule(allData, topcategory);
+    }
+
+    function createEventElement(event) {
+        const eventElement = document.createElement('div');
+        eventElement.classList.add('event');
+        
+        let eventSearchData = event.event.toLowerCase();
+
+        const channelsHTML = Array.isArray(event.channels) ? event.channels.map(channel => {
+            eventSearchData += ` ${channel.channel_name.toLowerCase()}`;
+            // Sayfa dışı yönlendirmeyi önleyip, kendi iç player'ımıza yönlendiriyoruz
+            return `
+                <a href="#" onclick="playStream(event, '${channel.channel_id}')" class="channel-item">
+                    <i class="fa-solid fa-play font-size:10px;"></i> ${channel.channel_name}
+                </a>
+            `;
+        }).join('') : '';
+
+        eventElement.setAttribute('data-search-content', eventSearchData.trim());
+
+        eventElement.innerHTML = `
+            <div class="event-content" onclick="toggleChannels(this)">
+                <div class="event-time"><i class="fa-regular fa-clock"></i> ${event.time}</div>
+                <div class="event-description">${event.event}</div>
+            </div>
+            <div class="channel-list">
+                ${channelsHTML}
+            </div>
+        `;
+        return eventElement;
     }
 
     function toggleChannels(element) {
@@ -118,13 +178,13 @@
         list.classList.toggle('show');
     }
 
-    // Reklam pencerelerini ezen, maçı sayfa içinde başlatan büyülü fonksiyon
+    // Reklamları Engelleyen ve Doğrudan Sayfa İçi Oynatan Fonksiyon
     function playStream(e, id) {
         e.preventDefault();
         const playerContainer = document.getElementById('player-container');
         const iframe = document.getElementById('live-player');
         
-        // Doğrudan reklamsız ham embed kaynağını çağırıyoruz ve sandbox ile kilitliyoruz
+        // daddylive altyapısının ham oynatıcı şablonunu çağırıyoruz
         iframe.src = `https://daddylive.li/embed/embed.php?id=${id}&player=1`;
         playerContainer.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -137,16 +197,95 @@
         playerContainer.style.display = 'none';
     }
 
-    function searchEvent() {
-        const query = document.getElementById('search').value.toLowerCase();
+    function renderSchedule(data, filterTopCategory) {
+        const scheduleContainer = document.getElementById('schedule-container');
+        scheduleContainer.innerHTML = '';
+
+        const sortedDates = data ? Object.keys(data).sort() : [];
+
+        sortedDates.forEach(date => {
+            let categoryHasEvents = false;
+            const dateContainer = document.createElement('div');
+            
+            for (const [topcategory, events] of Object.entries(data[date])) {
+                if (filterTopCategory !== 'All' && filterTopCategory !== topcategory) continue;
+                
+                const topCategoryElement = document.createElement('div');
+                topCategoryElement.classList.add('topcategory-section');
+                topCategoryElement.setAttribute('data-topcategory', topcategory);
+                
+                const topCategoryTitle = document.createElement('h2');
+                topCategoryTitle.innerHTML = `<i class="fa-solid fa-trophy"></i> ${topcategory}`;
+                topCategoryElement.appendChild(topCategoryTitle);
+                
+                events.forEach(event => {
+                    topCategoryElement.appendChild(createEventElement(event));
+                    categoryHasEvents = true;
+                });
+                
+                if (events.length > 0) {
+                    dateContainer.appendChild(topCategoryElement);
+                }
+            }
+            
+            if (categoryHasEvents) {
+                const dateHeader = document.createElement('div');
+                dateHeader.classList.add('event-date');
+                dateHeader.innerHTML = `<i class="fa-regular fa-calendar-days"></i> ${date}`;
+                scheduleContainer.appendChild(dateHeader);
+                scheduleContainer.appendChild(dateContainer);
+            }
+        });
+
+        if (scheduleContainer.children.length === 0) {
+            scheduleContainer.innerHTML = '<p style="text-align: center; padding: 20px; color:#94a3b8;">Bu kategoriye ait aktif yayın bulunamadı.</p>';
+        }
+    }
+
+    function searchEventOrChannel() {
+        const searchValue = document.getElementById('search').value.toLowerCase().trim();
         const events = document.querySelectorAll('.event');
-        events.forEach(ev => {
-            const text = ev.innerText.toLowerCase();
-            ev.style.display = text.includes(query) ? 'block' : 'none';
+        const categories = document.querySelectorAll('.topcategory-section');
+        const dateHeaders = document.querySelectorAll('.event-date');
+
+        if (searchValue === '') {
+            events.forEach(event => event.style.display = 'block');
+            categories.forEach(cat => cat.style.display = 'block');
+            dateHeaders.forEach(header => header.style.display = 'block');
+            return;
+        }
+
+        categories.forEach(cat => {
+            let hasVisibleEvent = false;
+            const catEvents = cat.querySelectorAll('.event');
+            
+            catEvents.forEach(event => {
+                const searchContent = event.getAttribute('data-search-content') || '';
+                if (searchContent.includes(searchValue)) {
+                    event.style.display = 'block';
+                    hasVisibleEvent = true;
+                } else {
+                    event.style.display = 'none';
+                }
+            });
+            
+            cat.style.display = hasVisibleEvent ? 'block' : 'none';
+        });
+
+        // Tarih başlıklarını eşitle
+        dateHeaders.forEach(header => {
+            let nextEl = header.nextElementSibling;
+            let showHeader = false;
+            if (nextEl && nextEl.querySelectorAll('.event[style="display: block;"]').length > 0) {
+                showHeader = true;
+            }
+            header.style.display = showHeader ? 'block' : 'none';
         });
     }
 
-    loadStreams();
+    // Paneli Başlat
+    fetchAndRenderSchedule();
 </script>
+
 </body>
 </html>
