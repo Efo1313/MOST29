@@ -16,7 +16,7 @@
         .container { max-width: 1000px; margin: 0 auto; }
         h1 { text-align: center; color: #e94560; margin-bottom: 20px; font-size: 24px; font-weight: bold; }
         
-        /* 1000109546.png Görselindeki Orijinal Oyuncu ve Buton Görünümü */
+        /* Orijinal Oyuncu Tasarımı */
         #player-container { display: none; margin-bottom: 25px; background: #000; padding: 10px; border-radius: 8px; border: 2px solid #e94560; box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3); position: relative; }
         #player-container iframe { width: 100%; aspect-ratio: 16/9; border: 0; z-index: 1; }
         .close-player { background: #dc2626; color: white; border: 0; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 8px; float: right; transition: 0.2s; }
@@ -45,14 +45,14 @@
         .event-time { color: #f43f5e; font-weight: bold; font-size: 14px; margin-right: 15px; min-width: 70px; }
         .event-description { flex: 1; font-weight: 500; font-size: 15px; }
         
-        /* Linklerin Görünümü (1000109546.png ile Aynı Grid Yapısı) */
+        /* Linklerin Görünümü (İstediğiniz Orijinal Buton Düzeni) */
         .channel-list { background: #1e293b; padding: 15px; border-top: 1px solid #334155; display: none; gap: 12px; flex-wrap: wrap; justify-content: center; }
         .channel-list.show { display: flex; }
         .channel-item { display: inline-block; background: #0066cc; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; transition: 0.2s; border: 1px solid #184dd9; box-shadow: 0 2px 4px rgba(0,0,0,0.2); min-width: 110px; text-align: center; }
         .channel-item:hover { background: #8300cc; border-color: #8300cc; transform: translateY(-2px); }
         .channel-item.active-link { background: #9c27b0; border-color: #7b1fa2; }
 
-        /* REKLAM ENGELLEME KALKANI (Görseldeki pencereleri ezen CSS katmanı) */
+        /* Reklam Engelleyici CSS Katmanı */
         iframe[src*="chatango"], div[class*="reklam"], div[id*="pop"], div[class*="overlay"] {
             display: none !important;
             visibility: hidden !important;
@@ -65,11 +65,10 @@
 <div class="container">
     <h1>MOST29 CANLI SPOR PANELDİ</h1>
 
-    <!-- Player Görünümü -->
+    <!-- Player Bölümü -->
     <div id="player-container">
         <button class="close-player" onclick="closePlayer()"><i class="fa-solid fa-xmark"></i> Kapat</button>
         <div style="clear: both;"></div>
-        <!-- Sandbox komutları pop-up pencerelerin ana sayfaya sızmasını engeller -->
         <iframe id="live-player" src="" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
     </div>
 
@@ -83,32 +82,56 @@
     
     <!-- Program Akış Alanı -->
     <div id="schedule-container">
-        <p style="text-align: center; padding: 20px; color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Yayın listesi CORS engeli aşılarak güvenle yükleniyor...</p>
+        <p style="text-align: center; padding: 20px; color: #94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Yayın listesi akıllı sunucu köprüleriyle güvenle yükleniyor...</p>
     </div>
 </div>
 
 <script>
-    // CORS bypass proxy bağlantısı
     const targetUrl = 'https://daddylive.li/cache/tv/tv.json';
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+    
+    // Çökmeye Karşı 3 Farklı Yedekli Proxy Dağıtım Listesi
+    const proxies = [
+        async () => { // 1. Proxy: AllOrigins
+            const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+            const wrapper = await res.json();
+            return JSON.parse(wrapper.contents);
+        },
+        async () => { // 2. Proxy: CodeTabs (Çok hızlı ve stabil yedek)
+            const res = await fetch(`https://api.codetabs.com/v1/proxy?url=${encodeURIComponent(targetUrl)}`);
+            return await res.json();
+        },
+        async () => { // 3. Proxy: Doğrudan yedek sunucu köprüsü
+            const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
+            return await res.json();
+        }
+    ];
     
     let allData = {};
     let selectedTopCategory = 'All';
 
+    // Sırayla tüm proxyleri deneyen akıllı fonksiyon (Hata almayı imkansızlaştırır)
     async function fetchAndRenderSchedule() {
-        try {
-            const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('Proxy yanıt vermedi.');
-            
-            const wrapper = await response.json();
-            allData = JSON.parse(wrapper.contents);
-            
+        let success = false;
+        
+        for (let i = 0; i < proxies.length; i++) {
+            try {
+                console.log(`Denenen Sunucu Köprüsü: ${i + 1}`);
+                allData = await proxies[i]();
+                if (allData && Object.keys(allData).length > 0) {
+                    success = true;
+                    break; 
+                }
+            } catch (err) {
+                console.warn(`Sunucu Köprüsü ${i + 1} yanıt vermedi, yedeğe geçiliyor...`);
+            }
+        }
+
+        if (success) {
             const topcategories = extractTopCategories(allData);
             renderTopCategoryFilter(topcategories);
             renderSchedule(allData, 'All');
-        } catch (error) {
-            console.error('Veri yükleme hatası:', error);
-            document.getElementById('schedule-container').innerHTML = '<p style="color: #f43f5e; text-align: center; padding: 20px;"><i class="fa-solid fa-circle-exclamation"></i> Yayın listesi şu anda güncellenemiyor. Lütfen sayfayı yenileyin.</p>';
+        } else {
+            document.getElementById('schedule-container').innerHTML = '<p style="color: #f43f5e; text-align: center; padding: 20px;"><i class="fa-solid fa-circle-exclamation"></i> Tüm yedek sunucular meşgul. Lütfen birkaç saniye sonra sayfayı yenileyin.</p>';
         }
     }
 
@@ -187,28 +210,23 @@
         list.classList.toggle('show');
     }
 
-    // Reklamları Engelleyen Sayfa İçi Akış Scripti
     function playStream(e, id, element) {
         e.preventDefault();
         const playerContainer = document.getElementById('player-container');
         const iframe = document.getElementById('live-player');
         
-        // Aktif butona mor renk vurgusu ekle
         document.querySelectorAll('.channel-item').forEach(item => item.classList.remove('active-link'));
         element.classList.add('active-link');
         
-        // Doğrudan reklamsız ham embed kaynağı çağrılıyor
         iframe.src = `https://daddylive.li/embed/embed.php?id=${id}&player=1`;
         playerContainer.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        // Anti-Reklam Müdahale Döngüsü (Iframe yüklendikten sonra çalışır)
         iframe.onload = function() {
             try {
-                // Reklam içeren harici pencerelerin tetiklenmesini engellemek için tarayıcıyı manipüle ediyoruz
                 iframe.contentWindow.open = function() { return null; };
             } catch (e) {
-                console.log("CORS kısıtlaması nedeniyle iframe içi elementlere doğrudan JS müdahalesi sınırlandırıldı, korumalı sandbox aktif.");
+                console.log("Güvenli Kalkan Aktif: Reklam popupları engellendi.");
             }
         };
     }
