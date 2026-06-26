@@ -3,57 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canlı Spor Yayını</title>
+    <title>Diema Sport Bulgaria - Canlı Yayın</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #0f172a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: sans-serif;
-        }
-        .player-container {
-            width: 90%;
-            max-width: 800px;
-            background: #1e293b;
-            padding: 10px;
-            border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-        }
-        .responsive-iframe {
-            position: relative;
-            padding-bottom: 56.25%; /* 16:9 Ekran Oranı */
-            height: 0;
-            overflow: hidden;
-            border-radius: 8px;
-        }
-        .responsive-iframe iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 0;
-        }
+        body { margin: 0; background-color: #0f172a; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .video-container { width: 100%; max-width: 854px; aspect-ratio: 16/9; padding: 10px; background: #000; border-radius: 8px; }
+        iframe { width: 100%; height: 100%; border: 0; }
     </style>
 </head>
 <body>
 
-<div class="player-container">
-    <div class="responsive-iframe">
-        <!-- Sandbox eklenerek reklamların yeni sekme açması ve siteden taşması engellenmiştir -->
-        <iframe 
-            src="https://daddylive.li/embed/embed.php?id=465&player=1&source=tv.json" 
-            allow="autoplay; fullscreen *; picture-in-picture *; encrypted-media" 
-            allowfullscreen 
-            webkitallowfullscreen 
-            mozallowfullscreen
-            sandbox="allow-scripts allow-same-origin allow-forms">
-        </iframe>
-    </div>
+<div class="video-container">
+    <!-- Sandbox ayarları reklam pencerelerinin (pop-up) üstte belirmesini engellemek için güncellendi -->
+    <iframe 
+        src="https://daddylive.li/embed/embed.php?id=465&player=1&source=tv.json"
+        allow="autoplay; fullscreen *; picture-in-picture *; encrypted-media" 
+        allowfullscreen 
+        webkitallowfullscreen 
+        mozallowfullscreen
+        sandbox="allow-scripts allow-same-origin">
+    </iframe>
 </div>
 
 </body>
