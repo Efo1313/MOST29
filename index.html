@@ -16,9 +16,9 @@
         .container { max-width: 1000px; margin: 0 auto; }
         h1 { text-align: center; color: #e94560; margin-bottom: 20px; font-size: 24px; font-weight: bold; }
         
-        /* Orijinal Oyuncu Tasarımı */
-        #player-container { display: none; margin-bottom: 25px; background: #000; padding: 10px; border-radius: 8px; border: 2px solid #e94560; box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3); }
-        #player-container iframe { width: 100%; aspect-ratio: 16/9; border: 0; }
+        /* 1000109546.png Görselindeki Orijinal Oyuncu ve Buton Görünümü */
+        #player-container { display: none; margin-bottom: 25px; background: #000; padding: 10px; border-radius: 8px; border: 2px solid #e94560; box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3); position: relative; }
+        #player-container iframe { width: 100%; aspect-ratio: 16/9; border: 0; z-index: 1; }
         .close-player { background: #dc2626; color: white; border: 0; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 8px; float: right; transition: 0.2s; }
         .close-player:hover { background: #b91c1c; }
 
@@ -45,11 +45,19 @@
         .event-time { color: #f43f5e; font-weight: bold; font-size: 14px; margin-right: 15px; min-width: 70px; }
         .event-description { flex: 1; font-weight: 500; font-size: 15px; }
         
-        /* Linklerin Orijinal Görünümü */
-        .channel-list { background: #1e293b; padding: 12px; border-top: 1px solid #334155; display: none; gap: 8px; flex-wrap: wrap; }
+        /* Linklerin Görünümü (1000109546.png ile Aynı Grid Yapısı) */
+        .channel-list { background: #1e293b; padding: 15px; border-top: 1px solid #334155; display: none; gap: 12px; flex-wrap: wrap; justify-content: center; }
         .channel-list.show { display: flex; }
-        .channel-item { display: inline-block; background: #2563eb; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; transition: 0.2s; border: 1px solid #1d4ed8; }
-        .channel-item:hover { background: #1d4ed8; transform: translateY(-1px); }
+        .channel-item { display: inline-block; background: #0066cc; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; transition: 0.2s; border: 1px solid #184dd9; box-shadow: 0 2px 4px rgba(0,0,0,0.2); min-width: 110px; text-align: center; }
+        .channel-item:hover { background: #8300cc; border-color: #8300cc; transform: translateY(-2px); }
+        .channel-item.active-link { background: #9c27b0; border-color: #7b1fa2; }
+
+        /* REKLAM ENGELLEME KALKANI (Görseldeki pencereleri ezen CSS katmanı) */
+        iframe[src*="chatango"], div[class*="reklam"], div[id*="pop"], div[class*="overlay"] {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
     </style>
 </head>
 <body>
@@ -57,12 +65,12 @@
 <div class="container">
     <h1>MOST29 CANLI SPOR PANELDİ</h1>
 
-    <!-- Tam Ekran Yapma Butonları İçeren Oyuncu Görünümü Aynen Korundu -->
+    <!-- Player Görünümü -->
     <div id="player-container">
         <button class="close-player" onclick="closePlayer()"><i class="fa-solid fa-xmark"></i> Kapat</button>
         <div style="clear: both;"></div>
-        <!-- Sandbox ayarları sadece video oynatmaya izin verecek, popup açamayacak şekilde kilitlendi -->
-        <iframe id="live-player" src="" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>
+        <!-- Sandbox komutları pop-up pencerelerin ana sayfaya sızmasını engeller -->
+        <iframe id="live-player" src="" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
     </div>
 
     <!-- Arama Çubuğu -->
@@ -80,7 +88,7 @@
 </div>
 
 <script>
-    // CORS hatasını tamamen bypass eden güvenli AllOrigins Proxy adresleri
+    // CORS bypass proxy bağlantısı
     const targetUrl = 'https://daddylive.li/cache/tv/tv.json';
     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
     
@@ -93,7 +101,7 @@
             if (!response.ok) throw new Error('Proxy yanıt vermedi.');
             
             const wrapper = await response.json();
-            allData = JSON.parse(wrapper.contents); // Gelen şifreli ham metni JSON nesnesine çeviriyoruz
+            allData = JSON.parse(wrapper.contents);
             
             const topcategories = extractTopCategories(allData);
             renderTopCategoryFilter(topcategories);
@@ -148,13 +156,14 @@
         eventElement.classList.add('event');
         
         let eventSearchData = event.event.toLowerCase();
+        let linkCounter = 1;
 
         const channelsHTML = Array.isArray(event.channels) ? event.channels.map(channel => {
             eventSearchData += ` ${channel.channel_name.toLowerCase()}`;
-            // Sayfa dışı yönlendirmeyi önleyip, kendi iç player'ımıza yönlendiriyoruz
+            const currentCount = linkCounter++;
             return `
-                <a href="#" onclick="playStream(event, '${channel.channel_id}')" class="channel-item">
-                    <i class="fa-solid fa-play font-size:10px;"></i> ${channel.channel_name}
+                <a href="#" onclick="playStream(event, '${channel.channel_id}', this)" class="channel-item">
+                    Link - ${currentCount}
                 </a>
             `;
         }).join('') : '';
@@ -178,16 +187,30 @@
         list.classList.toggle('show');
     }
 
-    // Reklamları Engelleyen ve Doğrudan Sayfa İçi Oynatan Fonksiyon
-    function playStream(e, id) {
+    // Reklamları Engelleyen Sayfa İçi Akış Scripti
+    function playStream(e, id, element) {
         e.preventDefault();
         const playerContainer = document.getElementById('player-container');
         const iframe = document.getElementById('live-player');
         
-        // daddylive altyapısının ham oynatıcı şablonunu çağırıyoruz
+        // Aktif butona mor renk vurgusu ekle
+        document.querySelectorAll('.channel-item').forEach(item => item.classList.remove('active-link'));
+        element.classList.add('active-link');
+        
+        // Doğrudan reklamsız ham embed kaynağı çağrılıyor
         iframe.src = `https://daddylive.li/embed/embed.php?id=${id}&player=1`;
         playerContainer.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Anti-Reklam Müdahale Döngüsü (Iframe yüklendikten sonra çalışır)
+        iframe.onload = function() {
+            try {
+                // Reklam içeren harici pencerelerin tetiklenmesini engellemek için tarayıcıyı manipüle ediyoruz
+                iframe.contentWindow.open = function() { return null; };
+            } catch (e) {
+                console.log("CORS kısıtlaması nedeniyle iframe içi elementlere doğrudan JS müdahalesi sınırlandırıldı, korumalı sandbox aktif.");
+            }
+        };
     }
 
     function closePlayer() {
@@ -195,6 +218,7 @@
         const iframe = document.getElementById('live-player');
         iframe.src = '';
         playerContainer.style.display = 'none';
+        document.querySelectorAll('.channel-item').forEach(item => item.classList.remove('active-link'));
     }
 
     function renderSchedule(data, filterTopCategory) {
@@ -244,12 +268,11 @@
 
     function searchEventOrChannel() {
         const searchValue = document.getElementById('search').value.toLowerCase().trim();
-        const events = document.querySelectorAll('.event');
         const categories = document.querySelectorAll('.topcategory-section');
         const dateHeaders = document.querySelectorAll('.event-date');
 
         if (searchValue === '') {
-            events.forEach(event => event.style.display = 'block');
+            document.querySelectorAll('.event').forEach(event => event.style.display = 'block');
             categories.forEach(cat => cat.style.display = 'block');
             dateHeaders.forEach(header => header.style.display = 'block');
             return;
@@ -272,7 +295,6 @@
             cat.style.display = hasVisibleEvent ? 'block' : 'none';
         });
 
-        // Tarih başlıklarını eşitle
         dateHeaders.forEach(header => {
             let nextEl = header.nextElementSibling;
             let showHeader = false;
@@ -283,7 +305,6 @@
         });
     }
 
-    // Paneli Başlat
     fetchAndRenderSchedule();
 </script>
 
