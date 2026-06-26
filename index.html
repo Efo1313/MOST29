@@ -3,26 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diema Sport Bulgaria - Canlı Yayın</title>
+    <title>MOST29 - Reklamsız Canlı TV</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { margin: 0; background-color: #0f172a; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .video-container { width: 100%; max-width: 854px; aspect-ratio: 16/9; padding: 10px; background: #000; border-radius: 8px; }
-        iframe { width: 100%; height: 100%; border: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #0f172a; color: #ffffff; font-family: sans-serif; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1 { text-align: center; color: #e94560; margin-bottom: 20px; font-size: 24px; }
+        
+        /* Arama Çubuğu */
+        .search-bar { margin-bottom: 20px; }
+        .search-bar input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e94560; background: #1e293b; color: #fff; font-size: 16px; }
+        
+        /* Maç Kartları */
+        .event-date { background: #e94560; padding: 8px 15px; margin: 20px 0 10px 0; border-radius: 6px; font-weight: bold; font-size: 14px; }
+        .topcategory-section h2 { font-size: 16px; color: #38bdf8; margin: 15px 0 8px 5px; border-left: 3px solid #38bdf8; padding-left: 8px; }
+        .event { background: #1e293b; margin-bottom: 8px; border-radius: 8px; border: 1px solid #334155; overflow: hidden; cursor: pointer; transition: 0.2s; }
+        .event:hover { border-color: #e94560; }
+        .event-content { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .event-time { color: #f43f5e; font-weight: bold; font-size: 14px; margin-right: 15px; }
+        .event-description { flex: 1; font-weight: 500; font-size: 15px; }
+        
+        /* Kanal Linkleri */
+        .channel-list { background: #0f172a; padding: 10px; border-top: 1px solid #334155; display: none; }
+        .channel-list.show { display: block; }
+        .channel-item { display: inline-block; background: #2563eb; color: white; padding: 8px 16px; margin: 5px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; transition: 0.2s; }
+        .channel-item:hover { background: #1d4ed8; transform: translateY(-1px); }
+        
+        /* Video Oynatıcı Alanı (Popup yerine sayfa içi player) */
+        #player-container { display: none; margin-bottom: 25px; background: #000; padding: 10px; border-radius: 8px; border: 2px solid #e94560; }
+        #player-container iframe { width: 100%; aspect-ratio: 16/9; border: 0; }
+        .close-player { background: #dc2626; color: white; border: 0; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 8px; float: right; }
     </style>
 </head>
 <body>
 
-<div class="video-container">
-    <!-- Sandbox ayarları reklam pencerelerinin (pop-up) üstte belirmesini engellemek için güncellendi -->
-    <iframe 
-        src="https://daddylive.li/embed/embed.php?id=465&player=1&source=tv.json"
-        allow="autoplay; fullscreen *; picture-in-picture *; encrypted-media" 
-        allowfullscreen 
-        webkitallowfullscreen 
-        mozallowfullscreen
-        sandbox="allow-scripts allow-same-origin">
-    </iframe>
+<div class="container">
+    <h1>MOST29 CANLI SPOR PANELDİ</h1>
+
+    <!-- Tıklanan Maç Doğrudan Burada Reklamsız Açılacak -->
+    <div id="player-container">
+        <button class="close-player" onclick="closePlayer()">Kapat X</button>
+        <iframe id="live-player" src="" allowfullscreen sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="search" placeholder="Takım, maç veya kanal ara..." onkeyup="searchEvent()">
+    </div>
+    
+    <div id="schedule-container">
+        <p style="text-align:center; color:#94a3b8;">Yayın listesi yükleniyor...</p>
+    </div>
 </div>
 
+<script>
+    // DaddyLive'ın resmi güncel maç listesi API adresleri
+    const url = 'https://daddylive.li/cache/tv/tv.json';
+    
+    async function loadStreams() {
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            renderSchedule(data);
+        } catch (error) {
+            document.getElementById('schedule-container').innerHTML = '<p style="color:red; text-align:center;">Yayın listesi alınamadı. Lütfen daha sonra tekrar deneyin.</p>';
+        }
+    }
+
+    function renderSchedule(data) {
+        const container = document.getElementById('schedule-container');
+        container.innerHTML = '';
+
+        for (const [date, categories] of Object.entries(data)) {
+            const dateDiv = document.createElement('div');
+            dateDiv.classList.add('event-date');
+            dateDiv.innerText = date;
+            container.appendChild(dateDiv);
+
+            for (const [category, events] of Object.entries(categories)) {
+                if (!events.length) continue;
+
+                const catSection = document.createElement('div');
+                catSection.classList.add('topcategory-section');
+                catSection.innerHTML = `<h2>${category}</h2>`;
+
+                events.forEach(event => {
+                    const eventDiv = document.createElement('div');
+                    eventDiv.classList.add('event');
+                    
+                    let channelsHTML = '';
+                    if (event.channels && Array.isArray(event.channels)) {
+                        event.channels.forEach(ch => {
+                            // Linkleri dışarıya göndermek yerine yerleşik fonksiyonumuza bağlıyoruz
+                            channelsHTML += `<a href="#" onclick="playStream(event, '${ch.channel_id}')" class="channel-item">${ch.channel_name}</a>`;
+                        });
+                    }
+
+                    eventDiv.innerHTML = `
+                        <div class="event-content" onclick="toggleChannels(this)">
+                            <span class="event-time">${event.time}</span>
+                            <span class="event-description">${event.event}</span>
+                        </div>
+                        <div class="channel-list">${channelsHTML}</div>
+                    `;
+                    catSection.appendChild(eventDiv);
+                });
+                container.appendChild(catSection);
+            }
+        }
+    }
+
+    function toggleChannels(element) {
+        const list = element.nextElementSibling;
+        list.classList.toggle('show');
+    }
+
+    // Reklam pencerelerini ezen, maçı sayfa içinde başlatan büyülü fonksiyon
+    function playStream(e, id) {
+        e.preventDefault();
+        const playerContainer = document.getElementById('player-container');
+        const iframe = document.getElementById('live-player');
+        
+        // Doğrudan reklamsız ham embed kaynağını çağırıyoruz ve sandbox ile kilitliyoruz
+        iframe.src = `https://daddylive.li/embed/embed.php?id=${id}&player=1`;
+        playerContainer.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function closePlayer() {
+        const playerContainer = document.getElementById('player-container');
+        const iframe = document.getElementById('live-player');
+        iframe.src = '';
+        playerContainer.style.display = 'none';
+    }
+
+    function searchEvent() {
+        const query = document.getElementById('search').value.toLowerCase();
+        const events = document.querySelectorAll('.event');
+        events.forEach(ev => {
+            const text = ev.innerText.toLowerCase();
+            ev.style.display = text.includes(query) ? 'block' : 'none';
+        });
+    }
+
+    loadStreams();
+</script>
 </body>
 </html>
